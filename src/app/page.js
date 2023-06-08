@@ -1,95 +1,102 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client"
+import { useEffect, useState } from "react"
+// import  style from  "./style.css"
+import axios from "axios"
+import TableRow from "./component/TableRow/TableRow"
+import InfoWrapper from "./component/InfoWrapper/InfoWrapper"
 
 export default function Home() {
+
+  let [userData, setUserData] = useState([])
+  let [searchQuery, setSearchQuery] = useState("")
+  let [filteredUserData, setFilteredUserData] = useState([])
+  let [activeRowIndex, setActiveRowIndex] = useState(2);
+  let [activeRowId, setActiveRowId] = useState()
+  let [activeRowData, setActiveRowData] = useState()
+
+  useEffect(()=>{
+    axios.get("https://admin-panel-data-edyoda-sourav.vercel.app/admin/data")
+    .then(res => {
+      setUserData(res.data)
+      setActiveRowId(res.data[activeRowIndex].id)
+      setActiveRowData(res.data[activeRowIndex])
+    })
+    .catch(err => console.log(err))
+  },[])
+
+  const getSearchValue = (e) => {
+    let search = e.target.value;
+    let filteredUser = userData.filter((item)=>item.firstName.toLowerCase().includes(search.toLowerCase()))
+    setFilteredUserData(filteredUser)
+    setSearchQuery(e.target.value)
+  }
+
+  const handleSelectedRow = (id) => {
+    let selectedRowRecords = userData.find(user=> user.id == id)
+    setActiveRowId(id)
+    setActiveRowData(selectedRowRecords)
+  }
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <main>
+        <div id="table-section">
+
+            <form action="/">
+                <input 
+                  type="text" 
+                  placeholder="Enter something" 
+                  name="search-box" 
+                  id="search-box" 
+                  onChange = {(e)=>getSearchValue(e)}
+                  value={searchQuery}
+                />
+            </form>
+
+            <div id="table-wrapper">
+
+                <div id="table-headers">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th className="column1">Id</th>
+                                <th className="column2">FirstName</th>
+                                <th className="column3">LastName</th>
+                                <th className="column4">Email</th>
+                                <th className="column5">Phone</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+
+                <div id="table-data">
+                    <table>
+                        <tbody>
+                            {
+                              searchQuery == "" && filteredUserData.length == 0 ?
+                              userData.map(item => <TableRow 
+                                user = {item} 
+                                key={item.id}
+                                selectedItem = {activeRowId}  
+                                handleClick = {handleSelectedRow}
+                              />):
+                              filteredUserData.map(item => <TableRow 
+                                user = {item} 
+                                key={item.id}
+                                selectedItem = {activeRowId}
+                                handleClick = {handleSelectedRow}
+                              />)
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
         </div>
-      </div>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+        {
+          activeRowData && <InfoWrapper info={activeRowData}/>
+        }
     </main>
   )
 }
